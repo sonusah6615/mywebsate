@@ -1,0 +1,114 @@
+using UnityEngine;
+
+public class WorldBikeWarGame : MonoBehaviour
+{
+    // ===== BIKE =====
+    public float bikeSpeed = 300f;
+    public float turnSpeed = 60f;
+
+    // ===== PLAYER =====
+    public Transform player;
+
+    // ===== WEAPONS =====
+    public GameObject bulletPrefab;
+    public GameObject explosionPrefab;
+    public Transform firePoint;
+
+    // ===== HELICOPTER =====
+    public bool inHelicopter = false;
+    public float heliSpeed = 50f;
+
+    // ===== JET =====
+    public bool inJet = false;
+    public float jetSpeed = 150f;
+
+    // ===== POLICE AI =====
+    public Transform[] policeUnits;
+    public float policeSpeed = 10f;
+
+    void Update()
+    {
+        BikeControl();
+        WeaponFire();
+        HelicopterControl();
+        JetControl();
+        PoliceAI();
+        SpecialBlast();
+    }
+
+    // ================= BIKE =================
+    void BikeControl()
+    {
+        if (inHelicopter || inJet) return;
+
+        float move = Input.GetAxis("Vertical") * bikeSpeed * Time.deltaTime;
+        float turn = Input.GetAxis("Horizontal") * turnSpeed * Time.deltaTime;
+
+        player.Translate(0, 0, move);
+        player.Rotate(0, turn, 0);
+    }
+
+    // ================= GUN =================
+    void WeaponFire()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+        }
+    }
+
+    // ================= HELICOPTER =================
+    void HelicopterControl()
+    {
+        if (!inHelicopter) return;
+
+        float h = Input.GetAxis("Horizontal");
+        float v = Input.GetAxis("Vertical");
+
+        player.Translate(h * heliSpeed * Time.deltaTime, v * heliSpeed * Time.deltaTime, heliSpeed * Time.deltaTime);
+    }
+
+    // ================= JET =================
+    void JetControl()
+    {
+        if (!inJet) return;
+
+        float h = Input.GetAxis("Horizontal");
+        float v = Input.GetAxis("Vertical");
+
+        player.Translate(0, v * jetSpeed * Time.deltaTime, jetSpeed * Time.deltaTime);
+        player.Rotate(0, h * 80f * Time.deltaTime, 0);
+    }
+
+    // ================= POLICE AI =================
+    void PoliceAI()
+    {
+        foreach (Transform police in policeUnits)
+        {
+            float dist = Vector3.Distance(police.position, player.position);
+            if (dist < 100f)
+            {
+                police.LookAt(player);
+                police.Translate(Vector3.forward * policeSpeed * Time.deltaTime);
+            }
+        }
+    }
+
+    // ================= MASS BLAST =================
+    void SpecialBlast()
+    {
+        if (Input.GetKeyDown(KeyCode.B))
+        {
+            for (int i = 0; i < 50; i++)
+            {
+                Vector3 randomPos = player.position + new Vector3(
+                    Random.Range(-100, 100),
+                    0,
+                    Random.Range(-100, 100)
+                );
+
+                Instantiate(explosionPrefab, randomPos, Quaternion.identity);
+            }
+        }
+    }
+}
